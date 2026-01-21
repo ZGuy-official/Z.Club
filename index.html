@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Z’s Club</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="cash">💵 $<span id="cashAmount">0</span></div>
+
+<audio id="clubMusic" loop>
+  <source src="music/club.mp3" type="audio/mpeg">
+</audio>
+<button id="musicBtn" onclick="toggleMusic()">🔊 Music</button>
+
+<h1>🕺 Z’s Club 🎶</h1>
+
+<div class="club">
+
+<section>
+<h2>🎴 Blackjack</h2>
+<input type="number" id="bet" placeholder="Bet amount">
+<p id="bjStatus">Place bet & deal</p>
+<button onclick="deal()">Deal</button>
+<button onclick="hit()">Hit</button>
+<button onclick="stand()">Stand</button>
+</section>
+
+<section>
+<h2>🎡 RNG Wheel</h2>
+<div id="wheel">🎡</div>
+<button onclick="spinWheel()">Spin (500)</button>
+<p id="rngResult"></p>
+</section>
+
+<section>
+<h2>🎰 Slot Machine</h2>
+<div id="slots">🍒 🍋 🔔</div>
+<button onclick="spinSlots()">Spin (250)</button>
+<p id="slotResult"></p>
+</section>
+
+<section>
+<h2>🎁 Daily Reward</h2>
+<button onclick="claimDaily()">Claim</button>
+<p id="dailyStatus"></p>
+</section>
+
+<section>
+<h2>🔑 Redeem Code</h2>
+<input type="text" id="codeInput" placeholder="Enter code">
+<button onclick="redeemCode()">Redeem</button>
+<p id="codeStatus"></p>
+</section>
+
+<section>
+<h2>🎒 Inventory</h2>
+<ul id="inventory"></ul>
+</section>
+
+<section>
+<h2>🛒 Shop</h2>
+<button onclick="buyBooster(1)">Luck Booster 1:00 (1000)</button>
+<button onclick="buyBooster(5)">Luck Booster 5:00 (5000)</button>
+<p id="boosterStatus"></p>
+</section>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
