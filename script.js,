@@ -1,253 +1,178 @@
-// ================== DATA ==================
-let cash = Number(localStorage.getItem("cash")) || 100;
-let inventory = JSON.parse(localStorage.getItem("inventory")) || {};
-let achievements = JSON.parse(localStorage.getItem("achievements")) || {};
-let usedCodes = JSON.parse(localStorage.getItem("usedCodes")) || {};
-let luck = 1;
-let boosterTimer = null;
-let lastDaily = Number(localStorage.getItem("lastDaily")) || 0;
+// ===== PLAYER =====
+let playerName = localStorage.getItem("playerName");
+let playerId = localStorage.getItem("playerId") ||
+  crypto.randomUUID().slice(0,8);
 
-// ================== SAVE ==================
-function save() {
-  localStorage.setItem("cash", cash);
-  localStorage.setItem("inventory", JSON.stringify(inventory));
-  localStorage.setItem("achievements", JSON.stringify(achievements));
-  localStorage.setItem("usedCodes", JSON.stringify(usedCodes));
+localStorage.setItem("playerId", playerId);
+
+function initPlayer(){
+  if(!playerName){
+    playerName = prompt("Enter your name") || "Sitemen";
+    localStorage.setItem("playerName", playerName);
+  }
+  document.getElementById("playerName").innerText = playerName;
+  document.getElementById("playerId").innerText = playerId;
+}
+initPlayer();
+
+function changeName(){
+  let n = prompt("New name:", playerName);
+  if(n){
+    playerName = n.slice(0,12);
+    localStorage.setItem("playerName", playerName);
+    initPlayer();
+  }
 }
 
-// ================== CASH ==================
-function updateCash() {
+// ===== SAVE =====
+let cash = Number(localStorage.getItem("cash")) || 100;
+let inventory = JSON.parse(localStorage.getItem("inventory")) || {};
+let lastDaily = Number(localStorage.getItem("lastDaily")) || 0;
+let luck = 1, boosterTimer;
+
+// ===== UTIL =====
+function save(){
+  localStorage.setItem("cash", cash);
+  localStorage.setItem("inventory", JSON.stringify(inventory));
+}
+
+function updateVIP(){
+  document.body.className =
+    cash >= 100000 ? "gold" :
+    cash >= 25000 ? "silver" :
+    cash >= 5000 ? "bronze" : "";
+}
+
+function updateCash(){
   document.getElementById("cashAmount").innerText = cash;
-  if (cash >= 10000) unlock("High Roller");
+  updateVIP();
   save();
 }
 updateCash();
 
-// ================== MUSIC ==================
+// ===== MUSIC =====
 let musicOn = false;
-const music = document.getElementById("clubMusic");
-
-function toggleMusic() {
+function toggleMusic(){
+  let m = document.getElementById("clubMusic");
+  musicOn ? m.pause() : m.play();
   musicOn = !musicOn;
-  musicOn ? music.play() : music.pause();
 }
 
-// ================== ACHIEVEMENTS ==================
-function unlock(name) {
-  if (achievements[name]) return;
-  achievements[name] = true;
-  alert("🏆 Achievement Unlocked: " + name);
-  save();
-}
+// ===== BLACKJACK =====
+let player=0,dealer=0,bet=0,playing=false;
+const card=()=>Math.floor(Math.random()*10)+1;
 
-// ================== BLACKJACK ==================
-let player = 0, dealer = 0, bet = 0, playing = false;
-
-function card() {
-  return Math.floor(Math.random() * 10) + 1;
-}
-
-function deal() {
-  bet = Number(document.getElementById("bet").value);
-  if (bet <= 0 || bet > cash) return alert("Invalid bet");
-  cash -= bet;
-
-  player = card() + card();
-  dealer = card();
-  playing = true;
-
-  document.getElementById("bjStatus").innerText =
-    `You: ${player} | Dealer: ${dealer}`;
+function deal(){
+  if(playing) return;
+  bet = +document.getElementById("bet").value;
+  if(bet<=0||bet>cash) return alert("Invalid bet");
+  cash-=bet;
+  player=card()+card();
+  dealer=card();
+  playing=true;
+  document.getElementById("bjStatus").innerText=`You:${player} Dealer:${dealer}`;
   updateCash();
 }
 
-function hit() {
-  if (!playing) return;
-  player += card();
-  if (player > 21) end(false);
-  else
-    document.getElementById("bjStatus").innerText =
-      `You: ${player} | Dealer: ${dealer}`;
+function hit(){
+  if(!playing) return;
+  player+=card();
+  player>21?end(false):
+  document.getElementById("bjStatus").innerText=`You:${player} Dealer:${dealer}`;
 }
 
-function stand() {
-  if (!playing) return;
-  while (dealer < 17) dealer += card();
-  end(player > dealer || dealer > 21);
+function stand(){
+  if(!playing) return;
+  while(dealer<17) dealer+=card();
+  if(player===dealer){ cash+=bet; playing=false; updateCash(); return;}
+  end(player>dealer||dealer>21);
 }
 
-function end(win) {
-  playing = false;
-  if (win) {
-    cash += bet * 2;
-    unlock("First Blackjack Win");
-    document.getElementById("bjStatus").innerText = "You win!";
-  } else {
-    document.getElementById("bjStatus").innerText = "You lose!";
-  }
+function end(win){
+  playing=false;
+  if(win){ cash+=bet*2; }
   updateCash();
 }
 
-// ================== RNG WHEEL ==================
-const loot = [
-  { n: "Candy", c: 100, img: "candy.png" },
-  { n: "Cake", c: 200, img: "cake.png" },
-  { n: "Fish", c: 500, img: "fish.png" },
-  { n: "Steak", c: 800, img: "steak.png" },
-  { n: "Chicken", c: 1000, img: "chicken.png" }
-];
-
-function spinWheel() {
-  if (cash < 500) return alert("Not enough cash");
-  cash -= 500;
-
-  document.getElementById("wheel").style.transform =
-    "rotate(" + Math.random() * 1080 + "deg)";
-
-  let roll = Math.floor(Math.random() * (1000 / luck)) + 1;
-  let won = "Nothing";
-
-  for (let i of loot) {
-    if (roll <= i.c) {
-      won = i.n;
-      addItem(i);
-      break;
-    }
-  }
-
-  unlock("First RNG Spin");
-  document.getElementById("rngResult").innerText = "You got: " + won;
-  updateCash();
+// ===== RNG =====
+const loot=["Candy","Cake","Fish","Steak","Chicken"];
+function spinWheel(){
+  if(cash<500) return;
+  cash-=500;
+  let item=loot[Math.floor(Math.random()*loot.length/luck)];
+  inventory[item]=(inventory[item]||0)+1;
+  document.getElementById("rngResult").innerText="You got "+item;
+  updateInventory(); updateCash();
 }
 
-// ================== INVENTORY ==================
-function addItem(item) {
-  inventory[item.n] = Math.min((inventory[item.n] || 0) + 1, 999);
-  updateInventory();
-}
-
-function updateInventory() {
-  let ul = document.getElementById("inventory");
-  ul.innerHTML = "";
-  let total = 0;
-
-  for (let i of loot) {
-    if (inventory[i.n]) {
-      total += inventory[i.n];
-      ul.innerHTML += `
-        <li>
-          <img src="images/${i.img}">
-          ${i.n} x${inventory[i.n]}
-        </li>`;
-    }
-  }
-
-  if (total >= 10) unlock("Collector");
-  if (total >= 100) unlock("Hoarder");
-
+// ===== INVENTORY =====
+function updateInventory(){
+  let ul=document.getElementById("inventory");
+  ul.innerHTML="";
+  for(let k in inventory)
+    ul.innerHTML+=`<li>${k} x${inventory[k]}</li>`;
   save();
 }
 updateInventory();
 
-// ================== SHOP ==================
-function buyBooster(min) {
-  let cost = min === 1 ? 1000 : 5000;
-  if (cash < cost) return alert("Not enough cash");
-  cash -= cost;
-  luck = 2;
-
-  document.getElementById("boosterStatus").innerText =
-    `Luck x2 for ${min} min`;
-
+// ===== SHOP =====
+function buyBooster(min){
+  let cost=min===1?1000:5000;
+  if(cash<cost) return;
+  cash-=cost;
+  luck=2;
   clearTimeout(boosterTimer);
-  boosterTimer = setTimeout(() => {
-    luck = 1;
-    document.getElementById("boosterStatus").innerText = "Luck expired";
-  }, min * 60000);
-
+  boosterTimer=setTimeout(()=>luck=1,min*60000);
   updateCash();
 }
 
-// ================== DAILY REWARD ==================
-function claimDaily() {
-  const now = Date.now();
-  const day = 86400000;
-
-  if (now - lastDaily < day) {
-    document.getElementById("dailyStatus").innerText =
-      "Come back later";
-    return;
-  }
-
-  let reward = 1000 + Math.floor(Math.random() * 1000);
-  cash += reward;
-  lastDaily = now;
-
-  localStorage.setItem("lastDaily", lastDaily);
-  unlock("Daily Visitor");
-  updateCash();
-
-  document.getElementById("dailyStatus").innerText =
-    `You got $${reward}!`;
-}
-
-// ================== SLOTS ==================
-const symbols = ["🍒", "🍋", "🔔", "💎", "7️⃣"];
-
-function spinSlots() {
-  if (cash < 250) return alert("Not enough cash");
-  cash -= 250;
-
-  let s1 = symbols[Math.floor(Math.random() * symbols.length)];
-  let s2 = symbols[Math.floor(Math.random() * symbols.length)];
-  let s3 = symbols[Math.floor(Math.random() * symbols.length)];
-
-  document.getElementById("slots").innerText = `${s1} ${s2} ${s3}`;
-
-  let win = 0;
-  if (s1 === s2 && s2 === s3) {
-    win = s1 === "7️⃣" ? 5000 : 1000;
-    unlock("Slot Jackpot");
-  } else if (s1 === s2 || s2 === s3) {
-    win = 500;
-  }
-
-  cash += win;
-  document.getElementById("slotResult").innerText =
-    win ? `You won $${win}!` : "No win";
+// ===== DAILY =====
+function claimDaily(){
+  let now=Date.now();
+  if(now-lastDaily<86400000) return;
+  let r=1000+Math.floor(Math.random()*1000);
+  cash+=r;
+  lastDaily=now;
+  localStorage.setItem("lastDaily",lastDaily);
   updateCash();
 }
 
-// ================== CODES ==================
-function redeemCode() {
-  let input = document.getElementById("codeInput").value
-    .trim()
-    .toUpperCase();
-  let status = document.getElementById("codeStatus");
+// ===== SLOTS =====
+const symbols=["🍒","🍋","🔔","💎","7️⃣"];
+function spinSlots(){
+  if(cash<250) return;
+  cash-=250;
+  let s=()=>symbols[Math.floor(Math.random()*symbols.length/luck)];
+  let a=s(),b=s(),c=s();
+  document.getElementById("slots").innerText=`${a} ${b} ${c}`;
+  if(a===b&&b===c) cash+=a==="7️⃣"?5000:1000;
+  updateCash();
+}
 
-  const codes = {
-    "WELCOME": () => cash += 1000,
-    "ZCLUB": () => cash += 5000,
-    "RICH": () => cash += 10000,
-    "LUCKY": () => { luck = 2; setTimeout(() => luck = 1, 60000); },
-    "CANDY": () => addItem({ n: "Candy", img: "candy.png" }),
-    "STEAK": () => addItem({ n: "Steak", img: "steak.png" })
+// ===== CODES =====
+function redeemCode(){
+  let c=document.getElementById("codeInput").value.toUpperCase();
+  if(c==="WELCOME") cash+=1000;
+  updateCash();
+}
+
+// ===== EXPORT / IMPORT =====
+function exportSave(){
+  let data = JSON.stringify(localStorage);
+  let blob=new Blob([data],{type:"application/json"});
+  let a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`zclub_${playerName}.json`;
+  a.click();
+}
+
+function importSave(e){
+  let file=e.target.files[0];
+  if(!file) return;
+  let r=new FileReader();
+  r.onload=()=>{ let d=JSON.parse(r.result);
+    for(let k in d) localStorage.setItem(k,d[k]);
+    location.reload();
   };
-
-  if (usedCodes[input]) {
-    status.innerText = "❌ Code already used";
-    return;
-  }
-
-  if (!codes[input]) {
-    status.innerText = "❌ Invalid code";
-    return;
-  }
-
-  codes[input]();
-  usedCodes[input] = true;
-  unlock("Code Breaker");
-  updateCash();
-
-  status.innerText = "✅ Code redeemed!";
+  r.readAsText(file);
 }
