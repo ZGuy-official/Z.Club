@@ -1,28 +1,34 @@
 body {
   background: radial-gradient(circle, #0a0a0a, #000);
   color: white;
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   text-align: center;
+  margin: 0;
 }
 
 h1 {
   color: #ff00ff;
-  text-shadow: 0 0 20px #ff00ff;
+  text-shadow: 0 0 25px #ff00ff;
 }
 
 .club {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px,1fr));
   gap: 20px;
   padding: 20px;
 }
 
 section {
-  background: rgba(0,0,0,0.75);
+  background: rgba(0,0,0,.8);
   border: 2px solid cyan;
   box-shadow: 0 0 15px cyan;
+  border-radius: 14px;
   padding: 15px;
-  border-radius: 12px;
+  transition: .25s;
+}
+
+section:hover {
+  transform: translateY(-5px);
 }
 
 button {
@@ -30,29 +36,34 @@ button {
   border: none;
   padding: 10px;
   margin: 5px;
+  border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
-  border-radius: 6px;
 }
 
-button:hover {
-  box-shadow: 0 0 15px #ff00ff;
+button:hover { box-shadow: 0 0 20px #ff00ff; }
+button:active { transform: scale(.95); }
+
+button:disabled {
+  background: #444;
+  color: #999;
 }
 
 input {
   padding: 8px;
-  border-radius: 5px;
+  border-radius: 6px;
   border: none;
-  text-align: center;
+  background: #111;
+  color: white;
 }
 
 #cash {
   position: fixed;
   top: 10px;
   right: 20px;
-  font-size: 20px;
   color: lime;
-  text-shadow: 0 0 10px lime;
+  font-size: 22px;
+  text-shadow: 0 0 12px lime;
 }
 
 #musicBtn {
@@ -61,26 +72,30 @@ input {
   right: 20px;
   background: cyan;
   color: black;
-  font-weight: bold;
 }
 
-#wheel {
-  font-size: 60px;
-  transition: transform 1s;
+#playerBox {
+  margin: 10px;
+  color: cyan;
+  text-shadow: 0 0 10px cyan;
 }
 
-#slots {
-  font-size: 50px;
-  letter-spacing: 10px;
+#wheel { font-size: 60px; transition: transform 1.2s; }
+#slots { font-size: 50px; letter-spacing: 12px; }
+
+#inventory {
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 0;
 }
 
-li {
-  list-style: none;
-  margin: 5px;
-}
+li { list-style: none; margin: 5px; }
 
-li img {
-  width: 32px;
-  vertical-align: middle;
-  margin-right: 5px;
+/* VIP */
+body.bronze section { border-color: orange; box-shadow: 0 0 20px orange; }
+body.silver section { border-color: #ddd; box-shadow: 0 0 25px #ddd; }
+body.gold section { border-color: gold; box-shadow: 0 0 30px gold; }
+
+@media(max-width:600px){
+  .club { grid-template-columns: 1fr; }
 }
